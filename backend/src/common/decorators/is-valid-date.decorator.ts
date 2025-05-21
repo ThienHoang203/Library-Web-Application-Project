@@ -22,19 +22,25 @@ export function IsValidDate(validationOptions?: ValidationOptions) {
             return false;
           }
 
-          const date = new Date(value);
-
-          if (isNaN(date.getTime())) {
-            args.constraints[0] = 'Ngày không đúng!';
-            return false;
-          }
+          const year = parseInt(match[1], 10);
+          const month = parseInt(match[2], 10);
+          const date = parseInt(match[3], 10);
+          const lastDate = new Date(year, month, 0).getDate();
 
           const today = new Date();
 
-          today.setHours(0, 0, 0, 0);
+          if (year > today.getFullYear()) {
+            args.constraints[0] = 'Năm không được lớn hơn năm hiện tại';
+            return false;
+          }
 
-          if (date.getTime() > today.getTime()) {
-            args.constraints[0] = 'Ngày không được vượt qua ngày hiện tại!';
+          if (month < 1 || month > 12) {
+            args.constraints[0] = 'Tháng phải từ 1 đến 12';
+            return false;
+          }
+
+          if (date < 1 || date > lastDate) {
+            args.constraints[0] = `Ngày trong tháng ${month} phải từ 1 đến ${lastDate}`;
             return false;
           }
 

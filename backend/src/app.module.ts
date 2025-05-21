@@ -19,6 +19,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 import { UserStatusInterceptor } from './common/interceptors/user-status.interceptor';
 import { BorrowingTransactionModule } from './modules/borrowing-transaction/borrowing-transaction.module';
 import { FinesModule } from './modules/fines/fines.module';
+import { BookShelfModule } from './modules/book-shelf/book-shelf.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { FinesModule } from './modules/fines/fines.module';
     AuthModule,
     BorrowingTransactionModule,
     FinesModule,
+    BookShelfModule,
   ],
   controllers: [AppController],
   providers: [
