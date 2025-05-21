@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+
+
+.div-form-style {
+    @apply [&>div]:relative [&>div]:w-full [&>div]:h-[45px] [&>div]:border-b-2 [&>div]:my-[18px];
+}
+
+.error-form-style {
+    @apply text-red-500 m-2 font-medium text-right;
+}
