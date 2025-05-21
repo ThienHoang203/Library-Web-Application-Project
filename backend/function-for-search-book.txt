@@ -1,0 +1,55 @@
+DELIMITER //
+
+CREATE FUNCTION LEVENSHTEIN(s1 VARCHAR(255), s2 VARCHAR(255))
+RETURNS INT
+DETERMINISTIC
+BEGIN
+    DECLARE s1_len, s2_len, i, j, c, c_temp INT;
+    DECLARE s1_char CHAR;
+    DECLARE cv0, cv1 VARBINARY(256);
+
+    SET s1_len = LENGTH(s1), s2_len = LENGTH(s2);
+    IF s1 = s2 THEN
+        RETURN 0;
+    ELSEIF s1_len = 0 THEN
+        RETURN s2_len;
+    ELSEIF s2_len = 0 THEN
+        RETURN s1_len;
+    END IF;
+
+    SET cv0 = 0x00;
+    SET j = 1;
+    WHILE j <= s2_len DO
+        SET cv0 = CONCAT(cv0, UNHEX(HEX(j)));
+        SET j = j + 1;
+    END WHILE;
+
+    SET i = 1;
+    WHILE i <= s1_len DO
+        SET s1_char = SUBSTRING(s1, i, 1);
+        SET c = i;
+        SET cv1 = UNHEX(HEX(i));
+        SET j = 1;
+        WHILE j <= s2_len DO
+            SET c = c + 1;
+            IF s1_char = SUBSTRING(s2, j, 1) THEN
+                SET c_temp = ORD(SUBSTRING(cv0, j, 1));
+            ELSE
+                SET c_temp = LEAST(
+                    ORD(SUBSTRING(cv0, j, 1)) + 1,
+                    c,
+                    ORD(SUBSTRING(cv0, j + 1, 1)) + 1
+                );
+            END IF;
+            SET cv1 = CONCAT(cv1, UNHEX(HEX(c_temp)));
+            SET c = c_temp;
+            SET j = j + 1;
+        END WHILE;
+        SET cv0 = cv1;
+        SET i = i + 1;
+    END WHILE;
+
+    RETURN ORD(SUBSTRING(cv0, s2_len + 1, 1));
+END //
+
+DELIMITER ;
