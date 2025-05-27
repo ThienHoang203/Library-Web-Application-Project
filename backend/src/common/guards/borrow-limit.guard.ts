@@ -32,8 +32,9 @@ export class BorrowLimitGuard implements CanActivate {
 
     let borrowerId: number = user.id;
 
+    const body = request.body;
+
     if (user.role === UserRole.ADMIN) {
-      const body = request.body;
       if (body?.borrowerId) {
         borrowerId = new ParseIntPositivePipe().transform(body.borrowerId);
       } else {
@@ -41,8 +42,7 @@ export class BorrowLimitGuard implements CanActivate {
       }
     }
 
-    const body = request.body;
-
+    //Check there is an existing borrowing transaction for the book from the borrower
     if (body?.bookId) {
       const hasTransaction = await this.borrowingTransactionRepository.exists({
         where: {
@@ -59,9 +59,12 @@ export class BorrowLimitGuard implements CanActivate {
       }
     }
 
+    // Check if the borrower has any unpaid fines
     const hasAnyFines = await this.fineRepository.existsBy({ isPaid: false, userId: borrowerId });
     if (hasAnyFines) throw new ForbiddenException('Vui lòng thanh toán các khoản phạt!');
 
+    // Check if the borrower has reached the borrowing limit
+    // Count the number of current borrowing transactions that are not cancelled or returned
     const currentBorrows = await this.borrowingTransactionRepository.count({
       where: [
         { userId: borrowerId, status: Not(BorrowingTransactionStatus.CANCEL) },

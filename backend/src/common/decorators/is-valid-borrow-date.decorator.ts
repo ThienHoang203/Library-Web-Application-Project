@@ -1,5 +1,6 @@
 import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
 import { BORROWING_TRANSACTION } from '../utils/constants';
+import { parse } from 'path';
 
 export function IsValidBorrowDate(validationOptions?: ValidationOptions) {
   return function (object: Object, propertyName: string) {
@@ -11,17 +12,35 @@ export function IsValidBorrowDate(validationOptions?: ValidationOptions) {
       constraints: [],
       validator: {
         validate(value: any, args: ValidationArguments) {
-          if (!value || (!(value instanceof Date) && isNaN(Date.parse(value)))) {
-            args.constraints.push(`${args.property} không đúng định dạng!`);
+          // If value is undefined or null, return false
+          if (!value) {
+            args.constraints[0] = `${args.property} không đúng định dạng!`;
+            return false;
+          }
+          // If value is not a Date, string, or number, return false
+          let dateValue: Date;
+          if (value instanceof Date) {
+            dateValue = value;
+          } else if (typeof value === 'string' || typeof value === 'number') {
+            console.log('Hello');
+
+            dateValue = new Date(value);
+          } else {
+            args.constraints[0] = `${args.property} không đúng định dạng!`;
             return false;
           }
 
-          const dateValue = new Date(value);
-          const currentDate = new Date();
+          if (isNaN(dateValue.getTime())) {
+            dateValue = new Date(parseInt(value as string, 10));
+            if (isNaN(dateValue.getTime())) {
+              args.constraints[0] = `${args.property} không đúng định dạng!`;
+              return false;
+            }
+          }
           console.log({ dateValue });
-          console.log({ currentDate });
-          console.log({ compare: dateValue.getTime() < currentDate.getTime() });
 
+          // Check if the date is in the future
+          const currentDate = new Date();
           if (dateValue.getTime() < currentDate.getTime()) {
             args.constraints[0] = `${args.property} không được nhỏ hơn ngày hiện tại!`;
             return false;

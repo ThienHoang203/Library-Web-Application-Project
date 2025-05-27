@@ -1,5 +1,7 @@
 import {
+  BadRequestException,
   ConflictException,
+  HttpStatus,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -10,9 +12,9 @@ import {
   BorrowingTransactionStatus,
   TransactionType,
 } from 'src/entities/borrowing-transaction.entity';
-import { In, Not, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, Not, Repository } from 'typeorm';
 import { CreateBorrowingTransactionDto } from './dto/create-borrowing-transaction.dto';
-import { Book } from 'src/entities/book.entity';
+import { Book, BookFormat } from 'src/entities/book.entity';
 import { BorrowingTransactionDto } from './dto/borrowing-transaction.dto';
 import { BORROWING_TRANSACTION } from 'src/common/utils/constants';
 import { AdminCreateBorrowingTransactionDto } from './dto/admin-create-borrowing-transaction.dto';
@@ -33,6 +35,8 @@ export class BorrowingTransactionService {
     private readonly userService: UsersService,
 
     private readonly bookService: BooksService,
+
+    private readonly dataSource: DataSource,
   ) {}
 
   async checkValidBookToBorrow(bookId: number) {
@@ -51,25 +55,29 @@ export class BorrowingTransactionService {
   async create(userId: number, { bookId, borrowedAt }: CreateBorrowingTransactionDto) {
     if (!borrowedAt) borrowedAt = new Date(Date.now() + BORROWING_TRANSACTION.DEFAULT_BORROW_AT);
 
-    const book = await this.checkValidBookToBorrow(bookId);
+    return this.dataSource.transaction(async (manager: EntityManager) => {
+      // Check if the book is valid to borrow
+      const book = await this.validateBookForUpdate(manager, bookId);
 
-    const oldCount = book.waitingBorrowCount;
+      // Increase the waiting borrow count of the book by 1
+      // If the stock is not updated successfully, throw InternalServerErrorException
+      const bookUpdateResult = await manager.update(
+        Book,
+        { id: bookId },
+        { waitingBorrowCount: book.waitingBorrowCount + 1 },
+      );
+      if (!bookUpdateResult.affected || bookUpdateResult.affected < 1)
+        throw new InternalServerErrorException('Cập nhật sách không thành công!');
 
-    book.waitingBorrowCount += 1;
-
-    const bookUpdateResult = await this.bookRepository.save(book);
-
-    if (oldCount >= bookUpdateResult.waitingBorrowCount) {
-      throw new InternalServerErrorException('Cập nhật hàng chờ mượn sách không thành công');
-    }
-
-    return await this.createTransaction({
-      bookId,
-      borrowedAt,
-      userId,
-      createdBy: userId,
-      status: BorrowingTransactionStatus.PENDING,
-      transactionType: TransactionType.USER_RESERVE,
+      // Create a new borrowing transaction
+      return await this.createTransaction(manager, {
+        bookId,
+        borrowedAt,
+        userId,
+        createdBy: userId,
+        status: BorrowingTransactionStatus.PENDING,
+        transactionType: TransactionType.USER_RESERVE,
+      });
     });
   }
 
@@ -81,39 +89,76 @@ export class BorrowingTransactionService {
     await this.userService.existUser(borrowerId);
 
     if (!borrowedAt) borrowedAt = new Date(Date.now() + BORROWING_TRANSACTION.DEFAULT_BORROW_AT);
+    console.log({ borrowedAt });
 
-    const book = await this.checkValidBookToBorrow(bookId);
+    return await this.dataSource.transaction(async (manager: EntityManager) => {
+      // Check if the book is valid to borrow
+      const book = await this.validateBookForUpdate(manager, bookId);
 
-    const oldCount = book.stock;
+      // Decrease the stock of the book by 1
+      // If the stock is not updated successfully, throw InternalServerErrorException
+      const bookUpdateResult = await manager.update(
+        Book,
+        { id: bookId },
+        { stock: book.stock - 1 },
+      );
+      if (!bookUpdateResult.affected || bookUpdateResult.affected < 1)
+        throw new InternalServerErrorException('Cập nhật sách không thành công!');
 
-    book.stock -= 1;
-    const bookUpdateResult = await this.bookRepository.save(book);
-
-    if (oldCount <= bookUpdateResult.stock) {
-      throw new InternalServerErrorException('Tạo giao dịch không thành công');
-    }
-
-    return await this.createTransaction({
-      bookId,
-      borrowedAt,
-      userId: borrowerId,
-      createdBy: adminId,
-      status: BorrowingTransactionStatus.BORROWING,
-      transactionType: TransactionType.ADMIN_BORROW,
+      //Create a new borrowing transaction
+      return await this.createTransaction(manager, {
+        bookId,
+        borrowedAt,
+        userId: borrowerId,
+        createdBy: adminId,
+        status: BorrowingTransactionStatus.BORROWING,
+        transactionType: TransactionType.ADMIN_BORROW,
+      });
     });
   }
 
-  async createTransaction(createData: BorrowingTransactionDto) {
-    if (createData?.borrowedAt) {
-      console.log({
-        date: createData.borrowedAt?.getTime(),
+  async validateBookForUpdate(manager: EntityManager, bookId: number): Promise<Book> {
+    const book = await manager.findOne(Book, {
+      where: { id: bookId },
+      lock: { mode: 'pessimistic_write' },
+    });
+
+    // Check if book exists
+    // If book does not exist, throw NotFoundException
+    if (!book) {
+      throw new NotFoundException({
+        message: `Không tồn tại bookId: ${bookId}`,
+        bookId: bookId,
+        statusCode: HttpStatus.NOT_FOUND,
       });
+    }
+
+    // Check if book is a physical book
+    // If book is not a physical book, throw BadRequestException
+    if (book.format !== BookFormat.PHYS)
+      throw new BadRequestException(`BookId: ${bookId} không phải sách in!`);
+
+    //check if this book's stock is lower than 1 or the borrowing queue is not less than the stock, this request has to cancel!
+    // If book's stock is lower than 1 or the borrowing queue is not less than the stock, throw BadRequestException
+    if (book.stock < 1 || book.stock <= book.waitingBorrowCount) {
+      throw new BadRequestException({
+        message: 'Số lượng sách không đủ',
+        bookId: bookId,
+        statusCode: HttpStatus.BAD_REQUEST,
+      });
+    }
+    return book;
+  }
+
+  async createTransaction(manager: EntityManager, createData: BorrowingTransactionDto) {
+    // If borrowedAt is provided, set due date
+    if (createData?.borrowedAt) {
       createData.dueDate = new Date(
         createData.borrowedAt?.getTime() + BORROWING_TRANSACTION.DUE_DATE,
       );
     }
 
-    const result = await this.borrowingTransactionRepository.insert({ ...createData });
+    const result = await manager.insert(BorrowingTransaction, { ...createData });
 
     if (result.identifiers.length < 1)
       throw new InternalServerErrorException('Tạo mới giao dịch mượn không thành công!');
@@ -288,5 +333,24 @@ export class BorrowingTransactionService {
 
     if (!result.affected || result.affected < 1)
       throw new InternalServerErrorException('Cập nhật giao dịch sách không thành công!');
+  }
+
+  async extendTransaction(transactionId: number, borrowerId?: number) {
+    const transaction = await this.borrowingTransactionRepository.findOneBy({
+      id: transactionId,
+      userId: borrowerId,
+      status: BorrowingTransactionStatus.BORROWING,
+    });
+
+    if (!transaction) throw new NotFoundException('Không tìm thấy giao dịch!');
+
+    const result = await this.borrowingTransactionRepository.update(transactionId, {
+      dueDate: new Date(Date.now() + BORROWING_TRANSACTION.DUE_DATE),
+    });
+
+    if (!result.affected || result.affected < 1)
+      throw new InternalServerErrorException('Gia hạn giao dịch sách không thành công!');
+
+    return { id: transaction.id };
   }
 }

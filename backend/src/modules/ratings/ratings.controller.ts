@@ -26,20 +26,20 @@ export class RatingsController {
   async update(
     @Req() req: Request,
     @Query('ratingId', ParseIntPositivePipe) ratingId: number,
-    @Query('bookId', ParseIntPositivePipe) bookId: number,
     @Body() body: UpdateRatingDto,
   ) {
-    return this.ratingsService.update((req?.user as User).id, ratingId, bookId, body);
+    return this.ratingsService.update((req?.user as User).id, ratingId, body);
   }
 
   @Delete('delete')
   @ResponseMessage('Xóa thành công')
-  async remove(
-    @Req() req: Request,
-    @Query('ratingId', ParseIntPositivePipe) ratingId: number,
-    @Query('bookId', ParseIntPositivePipe) bookId: number,
-  ) {
-    return this.ratingsService.remove((req.user as User).id, ratingId, bookId);
+  async remove(@Req() req: Request, @Query('ratingId', ParseIntPositivePipe) ratingId: number) {
+    const user = req.user as User;
+    let userId: number | undefined = undefined;
+    if (user.role !== UserRole.ADMIN) {
+      userId = user.id;
+    }
+    return this.ratingsService.remove(ratingId, userId);
   }
 
   @Get('my-search')

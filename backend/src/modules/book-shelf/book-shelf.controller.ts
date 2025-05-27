@@ -1,10 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Req, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Req, Query, Res } from '@nestjs/common';
 import { BookShelfService } from './book-shelf.service';
 import { CreateBookShelfDto } from './dto/create-book-shelf.dto';
-import { UpdateBookShelfDto } from './dto/update-book-shelf.dto';
+import { ChangeBookShelfStatusDto } from './dto/change-book-shelf-status.dto';
 import { Request } from 'express';
 import { User } from 'src/entities/user.entity';
 import { FilterBookShelfDto } from './dto/filter-bookShelf.dto';
+import { ParseIntPositivePipe } from 'src/common/pipes/parse-int-positive.pipe';
+import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
 
 @Controller('book-shelf')
 export class BookShelfController {
@@ -22,17 +24,22 @@ export class BookShelfController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.bookShelfService.findOne(+id);
+  findOneById(@Param('id', ParseIntPositivePipe) id: number) {
+    return this.bookShelfService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBookShelfDto: UpdateBookShelfDto) {
-    return this.bookShelfService.update(+id, updateBookShelfDto);
+  @ResponseMessage('Cập nhật trạng thái sách trong tủ sách thành công!')
+  changeStatus(
+    @Param('id', ParseIntPositivePipe) id: number,
+    @Body() changeStatus: ChangeBookShelfStatusDto,
+  ) {
+    return this.bookShelfService.changeStatus(id, changeStatus);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.bookShelfService.remove(+id);
+  @ResponseMessage('Xoá sách khỏi tủ sách thành công!')
+  remove(@Req() req: Request, @Param('id', ParseIntPositivePipe) id: number) {
+    return this.bookShelfService.remove((req?.user as User).id, id);
   }
 }

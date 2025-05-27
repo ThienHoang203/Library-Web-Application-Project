@@ -35,22 +35,13 @@ export class RatingsService {
     return { id: (result.raw as ResultSetHeader).insertId };
   }
 
-  async update(
-    userId: number,
-    ratingId: number,
-    bookId: number,
-    updateRatingDto: UpdateRatingDto,
-  ): Promise<void> {
-    const existRating = await this.ratingRepository.existsBy({ userId, bookId, id: ratingId });
+  async update(userId: number, ratingId: number, updateRatingDto: UpdateRatingDto): Promise<void> {
+    const existRating = await this.ratingRepository.existsBy({ userId, id: ratingId });
     if (!existRating) throw new NotFoundException(`Không tìm thấy rating với ID: ${ratingId}`);
-
-    if (!(await this.bookService.existBookId(bookId)))
-      throw new NotFoundException(`Không tồn tại cuốn sách id: ${bookId}!`);
 
     const result = await this.ratingRepository.update(
       {
         userId,
-        bookId,
         id: ratingId,
       },
       updateRatingDto,
@@ -60,8 +51,8 @@ export class RatingsService {
       throw new InternalServerErrorException('Cập nhật đánh giá không thành công!');
   }
 
-  async remove(userId: number, ratingId: number, bookId: number) {
-    const result = await this.ratingRepository.delete({ id: ratingId, userId, bookId });
+  async remove(ratingId: number, userId?: number) {
+    const result = await this.ratingRepository.delete({ id: ratingId, userId });
 
     if (!result?.affected || result.affected === 0)
       throw new InternalServerErrorException('Xóa đánh giá không thành công!');

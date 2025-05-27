@@ -1,6 +1,11 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateBookShelfDto } from './dto/create-book-shelf.dto';
-import { UpdateBookShelfDto } from './dto/update-book-shelf.dto';
+import { ChangeBookShelfStatusDto } from './dto/change-book-shelf-status.dto';
 import { Repository } from 'typeorm';
 import { Bookshelf } from 'src/entities/bookshelf.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -15,9 +20,18 @@ export class BookShelfService {
   ) {}
 
   async create(userId: number, createBookShelfDto: CreateBookShelfDto) {
+    //Check if the book exists
     const hasBook = await this.bookRepository.existsBy({ id: createBookShelfDto.bookId });
     if (!hasBook) throw new NotFoundException('Không tìm thấy sách');
 
+    // Check if the book is already in the user's bookshelf
+    const hasBookInShelf = await this.bookShelfRepository.existsBy({
+      userId,
+      bookId: createBookShelfDto.bookId,
+    });
+    if (hasBookInShelf) throw new ConflictException('Sách đã có trong tủ sách của bạn!');
+
+    // Insert the new book into the bookshelf
     const result = await this.bookShelfRepository.insert({ ...createBookShelfDto, userId });
 
     if (result.identifiers.length < 1)
@@ -44,15 +58,39 @@ export class BookShelfService {
     return await query.getMany();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} bookShelf`;
+  async findOne(id: number) {
+    // Check if the bookshelf entry exists
+    const bookShelf = await this.bookShelfRepository.findOneBy({ id });
+    if (!bookShelf) throw new NotFoundException('Không tìm thấy sách trong tủ sách của bạn!');
+
+    return bookShelf;
   }
 
-  update(id: number, updateBookShelfDto: UpdateBookShelfDto) {
-    return `This action updates a #${id} bookShelf`;
+  async changeStatus(id: number, changeStatus: ChangeBookShelfStatusDto) {
+    // Check if the bookshelf entry exists
+    const bookShelf = await this.bookShelfRepository.existsBy({ id });
+    if (!bookShelf) throw new NotFoundException('Không tìm thấy sách trong tủ sách của bạn!');
+
+    // Update the status
+    const result = await this.bookShelfRepository.update({ id }, { status: changeStatus.status });
+
+    if (!result.affected || result.affected < 1)
+      throw new InternalServerErrorException('Cập nhật trạng thái thất bại!');
+
+    return { id, status: changeStatus.status };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} bookShelf`;
+  async remove(userId: number, id: number) {
+    // Check if the bookshelf entry exists
+    const bookShelf = await this.bookShelfRepository.findOneBy({ id, userId });
+    if (!bookShelf) throw new NotFoundException('Không tìm thấy sách trong tủ sách của bạn!');
+
+    // Delete the bookshelf entry
+    const result = await this.bookShelfRepository.delete({ id });
+
+    if (!result.affected || result.affected < 1)
+      throw new InternalServerErrorException('Xoá sách khỏi tủ sách thất bại!');
+
+    return { id };
   }
 }

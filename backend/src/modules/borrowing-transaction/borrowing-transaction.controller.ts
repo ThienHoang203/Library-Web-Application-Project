@@ -24,7 +24,7 @@ export class BorrowingTransactionController {
     return this.borrowingTransactionService.create((req?.user as User).id, body);
   }
 
-  //create borrowing transaction for normal admin
+  //create borrowing transaction for admin
   @Post('admin')
   @Roles(UserRole.ADMIN)
   @ResponseMessage('Tạo mới giao dịch mượn thành công.')
@@ -85,7 +85,21 @@ export class BorrowingTransactionController {
   @Patch(':id/accept')
   @Roles(UserRole.ADMIN)
   @ResponseMessage('Chấp nhận giao dịch mượn sách thành công!')
-  async acceptTransaction(
+  async acceptTransaction(@Param('id', ParseIntPositivePipe) transactionId: number) {
+    return this.borrowingTransactionService.acceptTransaction(transactionId);
+  }
+
+  @Patch(':id/return')
+  @Roles(UserRole.ADMIN)
+  @ResponseMessage('Chấp nhận giao dịch mượn sách thành công!')
+  async returnTransaction(@Param('id', ParseIntPositivePipe) transactionId: number) {
+    return this.borrowingTransactionService.returnTransaction(transactionId);
+  }
+
+  @Patch(':id/extend')
+  @Roles(UserRole.ADMIN)
+  @ResponseMessage('Gia hạn giao dịch mượn sách thành công!')
+  async extendTransaction(
     @Req() req: Request,
     @Param('id', ParseIntPositivePipe) transactionId: number,
   ) {
@@ -93,6 +107,6 @@ export class BorrowingTransactionController {
 
     const borrowerId = user.role === UserRole.ADMIN ? undefined : user.id;
 
-    return this.borrowingTransactionService.acceptTransaction(transactionId);
+    return this.borrowingTransactionService.extendTransaction(transactionId, borrowerId);
   }
 }
