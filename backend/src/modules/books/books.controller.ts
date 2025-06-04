@@ -128,7 +128,7 @@ export class BooksController {
         storage: memoryStorage(),
         limits: {
           // the max number of fields which are not file-fields
-          fields: 6,
+          fields: 7,
           // the max number of file-fields
           files: 2,
         },

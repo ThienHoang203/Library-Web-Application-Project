@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import CreateBookDto from './dto/create-book.dto';
 import { Book, BookFormat } from 'src/entities/book.entity';
-import { In, Like, Not, Repository } from 'typeorm';
+import { In, Like, Not, Repository, SelectQueryBuilder } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UpdateBookDto } from './dto/update-book.dto';
 import { FILE_CONSTANTS } from 'src/common/utils/constants';
@@ -14,6 +14,8 @@ import { removeFile, replaceFile, saveFile } from 'src/common/utils/functions';
 import SearchBookDto from './dto/search-book.dto';
 import { CreateReadingProgressDto } from './dto/create-reading-progress.dto';
 import { ReadingProgress } from 'src/entities/reading-progress.entity';
+import { Rating } from 'src/entities/rating.entity';
+import { format } from 'path';
 
 @Injectable()
 export class BooksService {
@@ -98,7 +100,10 @@ export class BooksService {
   }
 
   async findById(id: number) {
-    const result = await this.bookRepository.findOneBy({ id });
+    const result = await this.bookRepository.findOne({
+      where: { id },
+      relations: ['ratings'],
+    });
 
     if (!result) throw new NotFoundException(`Không tìm thấy sách id: ${id}!`);
 
@@ -149,7 +154,7 @@ export class BooksService {
     limit,
     sortBy,
     sortOrder,
-  }: SearchBookDto): Promise<Book[]> {
+  }: SearchBookDto): Promise<any[]> {
     let where: any = {};
     if (author) where.author = Like(`%${author}%`);
     if (title) where.title = Like(`%${author}%`);
@@ -159,21 +164,68 @@ export class BooksService {
     if (stock) where.stock = stock;
     if (version) where.version = version;
 
-    const users = await this.bookRepository.find({
-      where,
-      order: { [sortBy]: sortOrder },
-      take: limit,
-      skip: currentPage && limit ? (currentPage - 1) * limit : undefined,
-    });
+    const query = this.bookRepository.createQueryBuilder('book');
 
-    return users;
+    // Áp điều kiện where nếu có
+    if (where) {
+      query.where(where);
+    }
+
+    // Áp order
+    if (sortBy && sortOrder) {
+      query.orderBy(`book.${sortBy}`, sortOrder.toUpperCase() as 'ASC' | 'DESC');
+    }
+
+    // Pagination
+    if (limit) {
+      query.take(limit);
+      if (currentPage) {
+        query.skip((currentPage - 1) * limit);
+      }
+    }
+
+    // Join relation ratings
+    query
+      .leftJoinAndSelect('book.ratings', 'r')
+      .addSelect('COUNT(r.id)', 'ratingCount')
+      .addSelect('AVG(r.rating)', 'avgRating')
+      .groupBy('book.id');
+
+    // const books = await this.bookRepository.find({
+    //   where,
+    //   order: { [sortBy]: sortOrder },
+    //   take: limit,
+    //   skip: currentPage && limit ? (currentPage - 1) * limit : undefined,
+    //   relations: ['ratings'],
+    // });
+
+    const raw = await query.getRawMany();
+
+    return raw.map((book) => {
+      return {
+        id: book.book_id,
+        title: book.book_title,
+        format: book.book_format,
+        author: book.book_author,
+        coverImageFilename: book.book_coverImageFilename,
+        ebookFilename: book.book_ebookFilename,
+        genre: book.book_genre,
+        description: book.book_description,
+        stock: book.book_stock,
+        waitingBorrowCount: book.book_waitingBorrowCount,
+        publishedDate: book.book_publishedDate,
+        version: book.book_version,
+        ratingCount: book.ratingCount,
+        avgRating: book.avgRating,
+      };
+    });
   }
 
   async existBookId(bookId: number): Promise<boolean> {
     return this.bookRepository.existsBy({ id: bookId });
   }
 
-  async searchBooksByTitleOrAuthor(searchString: string): Promise<Book[]> {
+  async searchBooksByTitleOrAuthor(searchString: string) {
     const lowerQuery = searchString.toLowerCase(); // Chuyển input thành chữ thường
     const searchTerm = `%${lowerQuery}%`; // Thêm ký tự wildcard cho LIKE
 
@@ -185,7 +237,7 @@ export class BooksService {
           LEAST(
             LEVENSHTEIN(LOWER(book.title), :query),  -- Khoảng cách với title
             LEVENSHTEIN(LOWER(book.author), :query)  -- Khoảng cách với author
-          ) + 
+          ) +
           IFNULL(NULLIF(LOCATE(:query, LOWER(book.title)), 0), 9999) * 0.1 +  -- Vị trí trong title
           IFNULL(NULLIF(LOCATE(:query, LOWER(book.author)), 0), 9999) * 0.1   -- Vị trí trong author
         )`,
@@ -196,8 +248,31 @@ export class BooksService {
         .orWhere('LOWER(book.author) LIKE :searchTerm') // Tìm trong author
         .orderBy('similarity_score', 'ASC') // Sắp xếp theo điểm số tăng dần
         .addOrderBy('book.title', 'ASC') // Sắp xếp phụ theo title
-        .getMany();
-      return books;
+        .leftJoinAndSelect('book.ratings', 'r')
+        .addSelect('COUNT(r.id)', 'ratingCount')
+        .addSelect('AVG(r.rating)', 'avgRating')
+        .groupBy('book.id')
+        .getRawMany(); // Tải các đánh giá liên quan
+
+      const booksResult = books.map((book) => {
+        return {
+          id: book.book_id,
+          title: book.book_title,
+          format: book.book_format,
+          author: book.book_author,
+          coverImageFilename: book.book_coverImageFilename,
+          ebookFilename: book.book_ebookFilename,
+          genre: book.book_genre,
+          description: book.book_description,
+          stock: book.book_stock,
+          waitingBorrowCount: book.book_waitingBorrowCount,
+          publishedDate: book.book_publishedDate,
+          version: book.book_version,
+          ratingCount: book.ratingCount,
+          avgRating: book.avgRating,
+        };
+      });
+      return booksResult;
     } catch (error) {
       console.log({ find_book_by_author_or_title_err: error });
 

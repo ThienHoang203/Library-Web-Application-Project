@@ -191,67 +191,66 @@ export class BorrowingTransactionService {
     userId,
     timeValue,
   }: AdminFilterTransactionDto) {
+    const queryBuilder = this.borrowingTransactionRepository.createQueryBuilder('bt');
+    queryBuilder
+      .select(BORROWING_TRANSACTION.BORROWING_TRANSACTION_FIELDS)
+      .leftJoin('bt.user', 'u')
+      .addSelect(BORROWING_TRANSACTION.USER_FIELDS)
+      .leftJoin('bt.book', 'b')
+      .addSelect(BORROWING_TRANSACTION.ADMIN_BOOK_FIELDS);
+
     if (typeTime && timeCategory && timeValue) {
       const { start, end } = buildDateRange(typeTime, timeValue);
 
-      let queryBuilder = this.borrowingTransactionRepository.createQueryBuilder('tr');
-
-      queryBuilder = queryBuilder.where(`tr.${timeCategory} BETWEEN :start AND :end`, {
+      queryBuilder.where(`tr.${timeCategory} BETWEEN :start AND :end`, {
         start,
         end,
       });
+    }
 
-      if (bookId) queryBuilder = queryBuilder.andWhere('tr.bookId = :bookId', { bookId });
+    if (bookId) queryBuilder.andWhere('bt.bookId = :bookId', { bookId });
 
-      if (userId) queryBuilder = queryBuilder.andWhere('tr.userId = :userId', { userId });
+    if (userId) queryBuilder.andWhere('bt.userId = :userId', { userId });
 
-      if (createdBy)
-        queryBuilder = queryBuilder.andWhere('tr.createdBy = :createdBy', { createdBy });
+    if (createdBy) queryBuilder.andWhere('bt.createdBy = :createdBy', { createdBy });
 
-      if (status) queryBuilder = queryBuilder.andWhere('tr.status = :status', { status });
+    if (status) queryBuilder.andWhere('bt.status = :status', { status });
 
-      if (transactionType)
-        queryBuilder = queryBuilder.andWhere('tr.transactionType = :transactionType', {
-          transactionType,
-        });
-
-      queryBuilder = queryBuilder.orderBy(
-        `tr.${sortBy}`,
-        sortOrder.toUpperCase() === 'DESC' ? 'DESC' : 'ASC',
-      );
-
-      queryBuilder = queryBuilder.take(limit);
-
-      queryBuilder = queryBuilder.skip(
-        currentPage && limit ? (currentPage - 1) * limit : undefined,
-      );
-
-      const result = await queryBuilder.getMany();
-
-      return result;
-    } else {
-      let where: any = {};
-      if (bookId) where.bookId = bookId;
-      if (userId) where.userId = userId;
-      if (createdBy) where.createdBy = createdBy;
-      if (status) where.status = status;
-      if (transactionType) where.transactionType = transactionType;
-
-      const transactions = await this.borrowingTransactionRepository.find({
-        where,
-        order: sortBy ? { [sortBy]: sortOrder ? sortOrder : 'desc' } : { created_at: 'DESC' },
-        take: limit,
-        skip: currentPage && limit ? (currentPage - 1) * limit : undefined,
+    if (transactionType)
+      queryBuilder.andWhere('bt.transactionType = :transactionType', {
+        transactionType,
       });
 
-      return transactions;
-    }
+    queryBuilder.orderBy(`bt.${sortBy}`, sortOrder.toUpperCase() as 'ASC' | 'DESC');
+
+    queryBuilder.take(limit);
+
+    queryBuilder.skip(currentPage && limit ? (currentPage - 1) * limit : undefined);
+
+    const result = await queryBuilder.getMany();
+
+    return result;
   }
 
   async getTransactionById(transactionId: number, borrowerId?: number) {
-    const transaction = await this.borrowingTransactionRepository.findOne({
-      where: { id: transactionId, ...(borrowerId ? { userId: borrowerId } : {}) },
-    });
+    const query = this.borrowingTransactionRepository
+      .createQueryBuilder('bt')
+      .select(BORROWING_TRANSACTION.BORROWING_TRANSACTION_FIELDS)
+      .leftJoin('bt.user', 'u')
+      .addSelect(BORROWING_TRANSACTION.USER_FIELDS)
+      .where('bt.id = :transactionId', { transactionId })
+      .leftJoin('bt.book', 'b');
+    if (borrowerId) {
+      query
+        .andWhere('bt.userId = :borrowerId', { borrowerId })
+        .addSelect(BORROWING_TRANSACTION.BOOK_FIELDS);
+    } else {
+      query.addSelect(BORROWING_TRANSACTION.ADMIN_BOOK_FIELDS);
+    }
+
+    query.orderBy('bt.created_at', 'DESC');
+
+    const transaction = await query.getOne();
 
     if (!transaction) throw new NotFoundException('Không tìm thấy giao dịch mượn sách!');
 

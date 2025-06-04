@@ -32,6 +32,6 @@ export class Rating extends AbstractEntity {
   user: User;
 
   @JoinColumn()
-  @ManyToOne(() => Book, (book) => book.rating, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+  @ManyToOne(() => Book, (book) => book.ratings, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
   book: Book;
 }

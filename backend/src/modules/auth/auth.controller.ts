@@ -44,6 +44,7 @@ export class AuthController {
   }
 
   @Post('reset-password')
+  @ResponseMessage('Thay đổi mật khẩu thành công, vui lòng đăng nhập lại.')
   @Public()
   resetPassword(@Body() body: ResetPasswordDto) {
     return this.authService.resetPassword(body);

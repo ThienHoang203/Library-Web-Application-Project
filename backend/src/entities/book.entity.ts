@@ -79,7 +79,7 @@ export class Book extends AbstractEntity {
     cascade: true,
     orphanedRowAction: 'delete',
   })
-  rating: Rating;
+  ratings: Rating[];
 
   @OneToMany(() => Reservation, (reservation) => reservation.book, {
     cascade: true,
