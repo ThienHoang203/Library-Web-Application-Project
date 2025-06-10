@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { BorrowingTransactionService } from './borrowing-transaction.service';
 import { Request } from 'express';
 import { User, UserRole } from 'src/entities/user.entity';
@@ -52,6 +63,13 @@ export class BorrowingTransactionController {
     const result = await this.borrowingTransactionService.filterTransactions(query);
 
     return result;
+  }
+
+  @Delete(':id')
+  @Roles(UserRole.ADMIN)
+  @ResponseMessage('Xóa giao dịch mượn sách thành công!')
+  async deleteTransaction(@Param('id', ParseIntPositivePipe) transactionId: number) {
+    return this.borrowingTransactionService.deleteTransaction(transactionId);
   }
 
   @Get(':id')

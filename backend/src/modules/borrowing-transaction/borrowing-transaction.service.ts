@@ -170,6 +170,7 @@ export class BorrowingTransactionService {
     const transactions = await this.borrowingTransactionRepository.find({
       where: { userId },
       order: { created_at: 'DESC' },
+      relations: ['user', 'book'],
       take: limit,
       skip: currentPage && limit ? (currentPage - 1) * limit : undefined,
     });
@@ -351,5 +352,41 @@ export class BorrowingTransactionService {
       throw new InternalServerErrorException('Gia hạn giao dịch sách không thành công!');
 
     return { id: transaction.id };
+  }
+
+  deleteTransaction(transactionId: number) {
+    return this.dataSource.transaction(async (manager: EntityManager) => {
+      const transaction = await manager.findOne(BorrowingTransaction, {
+        where: { id: transactionId },
+        relations: ['book'],
+      });
+
+      if (!transaction) throw new NotFoundException('Không tìm thấy giao dịch!');
+
+      // If the transaction is not in PENDING or CANCEL status, throw BadRequestException
+      if (
+        transaction.status !== BorrowingTransactionStatus.PENDING &&
+        transaction.status !== BorrowingTransactionStatus.CANCEL
+      )
+        throw new BadRequestException('Giao dịch không thể hủy!');
+
+      // Update the book's waiting borrow count
+      const bookUpdateResult = await manager.update(
+        Book,
+        { id: transaction.bookId },
+        { waitingBorrowCount: transaction.book.waitingBorrowCount - 1 },
+      );
+
+      if (!bookUpdateResult.affected || bookUpdateResult.affected < 1)
+        throw new InternalServerErrorException('Cập nhật sách không thành công!');
+
+      // Delete the transaction
+      const deleteResult = await manager.delete(BorrowingTransaction, { id: transactionId });
+
+      if (!deleteResult.affected || deleteResult.affected < 1)
+        throw new InternalServerErrorException('Xóa giao dịch không thành công!');
+
+      return { id: transactionId };
+    });
   }
 }

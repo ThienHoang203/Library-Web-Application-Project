@@ -67,8 +67,10 @@ export class BorrowLimitGuard implements CanActivate {
     // Count the number of current borrowing transactions that are not cancelled or returned
     const currentBorrows = await this.borrowingTransactionRepository.count({
       where: [
-        { userId: borrowerId, status: Not(BorrowingTransactionStatus.CANCEL) },
-        { userId: borrowerId, status: Not(BorrowingTransactionStatus.RETURNED) },
+        {
+          userId: borrowerId,
+          status: Not(In([BorrowingTransactionStatus.CANCEL, BorrowingTransactionStatus.RETURNED])),
+        },
       ],
     });
 

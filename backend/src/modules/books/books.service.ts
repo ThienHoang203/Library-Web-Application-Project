@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import CreateBookDto from './dto/create-book.dto';
 import { Book, BookFormat } from 'src/entities/book.entity';
-import { In, Like, Not, Repository, SelectQueryBuilder } from 'typeorm';
+import { In, Like, Not, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UpdateBookDto } from './dto/update-book.dto';
 import { FILE_CONSTANTS } from 'src/common/utils/constants';
@@ -14,8 +14,6 @@ import { removeFile, replaceFile, saveFile } from 'src/common/utils/functions';
 import SearchBookDto from './dto/search-book.dto';
 import { CreateReadingProgressDto } from './dto/create-reading-progress.dto';
 import { ReadingProgress } from 'src/entities/reading-progress.entity';
-import { Rating } from 'src/entities/rating.entity';
-import { format } from 'path';
 
 @Injectable()
 export class BooksService {
@@ -102,7 +100,7 @@ export class BooksService {
   async findById(id: number) {
     const result = await this.bookRepository.findOne({
       where: { id },
-      relations: ['ratings'],
+      relations: ['ratings', 'ratings.user'],
     });
 
     if (!result) throw new NotFoundException(`Không tìm thấy sách id: ${id}!`);

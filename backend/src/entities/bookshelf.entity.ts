@@ -14,8 +14,8 @@ export enum BookshelfSortType {
   USER_ID = 'userId',
   BOOK_ID = 'bookId',
   STATUS = 'status',
-  CREATED_AT = 'createdAt',
-  UPDATED_AT = 'updatedAt',
+  CREATED_AT = 'created_at',
+  UPDATED_AT = 'updated_at',
 }
 
 @Entity()

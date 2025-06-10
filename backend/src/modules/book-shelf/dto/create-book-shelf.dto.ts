@@ -13,5 +13,5 @@ export class CreateBookShelfDto {
     message: `Phải có định dạng ${Object.values(BookshelfStatus).join(' ,hoặc ')}`,
   })
   @IsOptional()
-  status?: BookshelfStatus;
+  status?: BookshelfStatus = BookshelfStatus.FAVORITE;
 }

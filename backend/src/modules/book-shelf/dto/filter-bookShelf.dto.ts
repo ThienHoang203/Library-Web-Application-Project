@@ -16,8 +16,8 @@ export class FilterBookShelfDto extends PaginateDto {
   @IsOptional()
   status?: BookshelfStatus;
 
-  @IsEnum(BookshelfStatus, {
-    message: `Phải có định dạng ${Object.values(BookshelfStatus).join(' ,hoặc ')}`,
+  @IsEnum(BookshelfSortType, {
+    message: `Phải có định dạng ${Object.values(BookshelfSortType).join(' ,hoặc ')}`,
   })
   @IsOptional()
   sortBy: BookshelfSortType = BookshelfSortType.CREATED_AT;
