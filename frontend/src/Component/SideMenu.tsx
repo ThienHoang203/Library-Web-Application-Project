@@ -1,82 +1,149 @@
 import { Outlet, useNavigate } from "react-router-dom";
-import { BookGerne } from "../types/book.type";
-import { useEffect, useState } from "react";
+import { BookFormat, BookGerne, BookSortType } from "../types/book.type";
+import { useEffect, useRef, useState } from "react";
+import { Filter } from "../Data/Api";
 
 export default function SideMenu() {
-    const navigate = useNavigate();
-    const category = Object.values(BookGerne);
-    const [searchData, setSearchData] = useState({
-        title: "",
-        author: "",
-        stock: "",
-        genre: ""
+  const category = Object.entries(BookGerne);
+    const formata = Object.entries(BookFormat);
+  const order = Object.entries(BookSortType);
+  const navigate = useNavigate();
+  const isFirst = useRef(true);
+  const [filter, setFilter] = useState({
+    format: "",
+    genre: "",
+    sortBy: "",
+    sortOrder: "",
+  });
+  useEffect(() => {
+    if (isFirst.current) {
+      isFirst.current = false;
+      return;
+    }
+    const query = new URLSearchParams();
+    Object.entries(filter).forEach(([key, value]) => {
+      if (value) query.append(key, value);
     });
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchData({ ...searchData, [e.target.name]: e.target.value });
-    };
+    Filter(`books/filter?${query.toString()}`).then((d) => {
+      navigate("/search", { state: d });
+    });
+  }, [filter, navigate]);
+  return (
+    <div className="overflow-hidden text-center">
+      <div className="w-screen flex flex-wrap mt-15">
+        <div className="w-screen flex">
+          <div className="w-[25%]  h-fit rounded-2xl shadow-[0px_0px_10px_rgba(0,0,0,0.2)] ml-5 font-medium p-6">
+            <div className="relative mt-4 pt-5">
+              <select
+                defaultValue={""}
+                onChange={(e) =>
+                  setFilter((prev) => ({ ...prev, format: e.target.value }))
+                }
+                id="format"
+                className=" w-full h-full outline-none pt-2 pr-11 pl-2 pb-2 font-medium border-2 rounded"
+              >
+                <option  value="">
+                  --------
+                </option>
+                {formata.map((item, index) => (
+                  <option key={index} value={item[1]}>
+                    {item[0]}
+                  </option>
+                ))}
+              </select>
 
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        if (searchData.title.trim() === "") {
-            setSearchData({
-                title: "",
-                author: "",
-                stock: "",
-                genre: ""
-            });
-
-            navigate("/search", { state: {} });
-        } else {
-            navigate("/search", { state: searchData });
-            setSearchData((prev) => ({ ...prev, title: "" }));
-        }
-    };
-
-    const handleChangeGenre = (post: string) => {
-        setSearchData((prev) => ({ ...prev, genre: post }));
-    };
-    useEffect(() => {
-        navigate("/search", { state: searchData });
-    }, [navigate, searchData]);
-
-    return (
-        <div className="overflow-hidden text-center">
-            <div className="w-screen flex flex-wrap mt-10">
-                <form className="max-w-screen-xl mx-auto mb-15 " onSubmit={handleSubmit}>
-                    <input
-                        type="text"
-                        name="title"
-                        value={searchData.title}
-                        onChange={handleChange}
-                        className="w-[600px] py-1 px-3  border-3 border-[#ccb552] rounded-2xl text-[20px] outline-none"
-                    />
-                    <button
-                        type="submit"
-                        className="ml-5 w-[180px] hover:cursor-pointer py-1 border-3 border-[#ccb552] rounded-2xl text-[20px] font-bold  hover:border-[black] hover:bg-black hover:text-[#ccb552]"
-                    >
-                        <i className="fa fa-solid fa-magnifying-glass pr-3"></i>
-                        Search
-                    </button>
-                </form>
-                <div className="w-screen flex">
-                    <div className="w-[25%] sidebar bg-gradient-to-b from-[black] to-[#305da0] text-white font-medium px-5 py-5">
-                        <ul className="">
-                            {category.map((post) => (
-                                <li
-                                    key={post}
-                                    className="flex hover:cursor-pointer px-6 py-4 hover:bg-[#305da0] rounded-2xl"
-                                    onClick={() => handleChangeGenre(post)}
-                                >
-                                    {post.toUpperCase()}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                    <div className="w-[72%] mx-auto bg-gray-200">
-                        <Outlet />
-                    </div>
-                </div>
+              <label
+                htmlFor="format"
+                className="absolute left-2 font-medium -translate-y-1/3  top-[-2px] "
+              >
+                Format
+              </label>
             </div>
+
+            <div className="relative mt-4 pt-5">
+              <select
+                defaultValue={""}
+                id="genre"
+                onChange={(e) =>
+                  setFilter((prev) => ({ ...prev, genre: e.target.value }))
+                }
+                className=" w-full h-full outline-none pt-2 pr-10 pl-2 pb-2 font-medium border-2 rounded"
+              >
+                <option  value="">
+                  --------
+                </option>
+
+                {category.map((item, index) => (
+                  <option key={index} value={item[1]}>
+                    {item[0]}
+                  </option>
+                ))}
+              </select>
+
+              <label
+                htmlFor="genre"
+                className="absolute left-2 font-medium -translate-y-1/3  top-[-2px] "
+              >
+                Genre
+              </label>
+            </div>
+            <div className="relative mt-4 pt-5">
+              <select
+                defaultValue={""}
+                onChange={(e) =>
+                  setFilter((prev) => ({ ...prev, sortBy: e.target.value }))
+                }
+                id="SortBy"
+                className=" w-full h-full outline-none pt-2 pr-10 pl-2 pb-2 font-medium border-2 rounded"
+              >
+                <option value="">
+                  --------
+                </option>
+
+                {order.map((item, index) => (
+                  <option key={index} value={item[1]}>
+                    {item[0]}
+                  </option>
+                ))}
+              </select>
+
+              <label
+                htmlFor="SortBy"
+                className="absolute left-2 font-medium -translate-y-1/3  top-[-2px] "
+              >
+                Sort Type
+              </label>
+            </div>
+            <div className="relative mt-4 pt-5">
+              <select
+                defaultValue={""}
+                id="SortOrder"
+                onChange={(e) =>
+                  setFilter((prev) => ({ ...prev, sortOrder: e.target.value }))
+                }
+                className=" w-full h-full outline-none pt-2 pr-10 pl-2 pb-2 font-medium border-2 rounded"
+              >
+                <option key={0} value="desc">
+                  DECREASE
+                </option>
+                <option key={1} value="asc">
+                  INCREASE
+                </option>
+              </select>
+
+              <label
+                htmlFor="SortOrder"
+                className="absolute left-2 font-medium -translate-y-1/3  top-[-2px] "
+              >
+                Sort Order
+              </label>
+            </div>
+          </div>
+          <div className="w-[72%] mx-auto ">
+            <Outlet />
+          </div>
         </div>
-    );
+      </div>
+    </div>
+  );
 }

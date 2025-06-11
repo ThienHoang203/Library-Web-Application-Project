@@ -11,7 +11,6 @@ export default function RowBookTable({ data }: Props) {
     return (
         <tr>
             <th>{data["#"]}</th>
-            <td>{data.id}</td>
             <td>{data.title}</td>
             <td>{data.format}</td>
             <td>{data.author}</td>

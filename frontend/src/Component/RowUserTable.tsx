@@ -11,7 +11,6 @@ export default function RowUserTable({ data }: Props) {
   return (
     <tr>
       <th>{data["#"]}</th>
-      <td>{data.id}</td>
       <td>{data.name}</td>
       <td>{data.username}</td>
       <td>{data.email}</td>

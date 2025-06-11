@@ -3,7 +3,7 @@ import { Slide, ToastContainer } from "react-toastify";
 
 export default function App() {
     return (
-        <div className="font-serif">
+        <div className="font">
             <ToastContainer
                 position="top-right"
                 autoClose={2000}

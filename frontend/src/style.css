@@ -1,6 +1,10 @@
 @import "tailwindcss";
-
-
+html {
+  scroll-behavior: smooth;
+}
+.font{
+    font-family: 'Times New Roman', Times, serif;
+}
 
 .div-form-style {
     @apply [&>div]:relative [&>div]:w-full [&>div]:h-[45px] [&>div]:border-b-2 [&>div]:my-[18px];

@@ -9,13 +9,11 @@ import ErrorFormMessage from "../Component/ErrorFormMessage";
 type Props = {
   endPoint?: string;
   redirectPage?: string;
-  closeFunction?: () => void;
 };
 
 export default function Register({
   endPoint,
   redirectPage,
-  closeFunction,
 }: Props) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -99,15 +97,6 @@ export default function Register({
 
   return (
     <div className="text-center wrapper-login mx-auto my-5 relative w-xl border-2 bg-white border-black rounded-2xl shadow-[0px_0px_20px_rgba(0,0,0,1)]">
-      {closeFunction && (
-        <button
-          onClick={closeFunction}
-          className="absolute right-[50px] top-[20px] text-black font-bold px-3 py-1.5 rounded-md border border-black  hover:cursor-pointer hover:text-white hover:bg-black  transform:hover  duration-300 ease"
-        >
-          <span>X</span>
-        </button>
-      )}
-
       <h2 className="font-medium text-[35px] pt-5">Register</h2>
 
       <form

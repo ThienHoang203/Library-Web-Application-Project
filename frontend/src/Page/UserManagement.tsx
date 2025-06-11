@@ -19,7 +19,6 @@ export default function UserManagement() {
   const { accessToken } = useContext(UserContext);
   const [colDef] = useState<string[]>([
     "#",
-    "ID",
     "Name",
     "Username",
     "Email",
@@ -28,7 +27,7 @@ export default function UserManagement() {
   const [rowData, setRowData] = useState<RowUserDataType[]>([]);
 
   useEffect(() => {
-    fetchGetUsers("/user", accessToken?.token ?? "")
+    fetchGetUsers("/users/filter", accessToken?.token ?? "")
       .then((d) => {
         if (d !== null)
           setRowData(
@@ -97,7 +96,7 @@ export default function UserManagement() {
           ))}
         </tr>
       </thead>
-      <tbody className="[&>tr]:even:bg-gray-300 [&>tr]:odd:bg-gray-100 [&>tr>*]:p-4  [&>tr>*]:border  [&>tr>*]:border-gray-300">
+      <tbody className="[&>tr]:even:bg-gray-300 [&>tr]:odd:bg-gray-100 [&>tr>*]:p-4  [&>tr>*]:border  [&>tr>*]:border-gray-500">
         {rowData.map((item) => (
           <RowUserTable key={item.id} data={item} />
         ))}

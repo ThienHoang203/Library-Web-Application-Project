@@ -52,8 +52,8 @@ export default function Footer() {
           </div>
         </div>
         <div className="w-[440px] p-4 my-4">
-          <div className="text-[#acacac]">
-            <h2 className="text-[16px] uppercase font-bold relative pb-5 text-left after:content-[''] after:absolute after:w-20 after:h-[3px] after:bg-[#ccb552] after:left-0 after:bottom-[10px] after:rounded">
+          <div className="text-[#cccccc]">
+            <h2 className="text-[16px] uppercase font-bold relative pb-5 text-left">
               functions
             </h2>
             <ul>
@@ -62,7 +62,7 @@ export default function Footer() {
                   to={"/"}
                   className="inline-block transition-transform duration-200  hover:scale-125 "
                 >
-                  <span className=" pr-5 pl-2 text-[#acacac]  hover:text-[#ccb552]">
+                  <span className=" pr-5 pl-2 text-[#cccccc]  hover:text-[#ccb552]">
                     Home
                   </span>
                 </NavLink>
@@ -72,7 +72,7 @@ export default function Footer() {
                   to={"/category"}
                   className="inline-block transition-transform duration-200  hover:scale-125"
                 >
-                  <span className=" pr-5 pl-2 text-[#acacac]  hover:text-[#ccb552]">
+                  <span className=" pr-5 pl-2 text-[#cccccc]  hover:text-[#ccb552]">
                     Category
                   </span>
                 </NavLink>
@@ -82,7 +82,7 @@ export default function Footer() {
                   to={"/search"}
                   className="inline-block transition-transform duration-200  hover:scale-125 "
                 >
-                  <span className="pr-5 pl-2 text-[#acacac]  hover:text-[#ccb552]">
+                  <span className="pr-5 pl-2 text-[#cccccc]  hover:text-[#ccb552]">
                     Books
                   </span>
                 </NavLink>
@@ -92,7 +92,7 @@ export default function Footer() {
                   to={"/search"}
                   className="inline-block transition-transform duration-200  hover:scale-125 "
                 >
-                  <span className="pr-5 pl-2 text-[#acacac]  hover:text-[#ccb552]">
+                  <span className="pr-5 pl-2 text-[#cccccc]  hover:text-[#ccb552]">
                     About Us
                   </span>
                 </NavLink>
@@ -101,8 +101,8 @@ export default function Footer() {
           </div>
         </div>
         <div className="w-[440px] p-4 my-4">
-          <div className="text-[#acacac]">
-            <h2 className="text-[16px] uppercase font-bold relative  pb-5 text-left after:content-[''] after:absolute after:w-20 after:h-[3px] after:bg-[#ccb552] after:left-0 after:bottom-[10px] after:rounded">
+          <div className="text-[#cccccc]">
+            <h2 className="text-[16px] uppercase font-bold relative  pl-2 pb-5 text-left ">
               More
             </h2>
             <ul className="">
@@ -111,7 +111,7 @@ export default function Footer() {
                   to={"/"}
                   className="inline-block transition-transform duration-200  hover:scale-125 "
                 >
-                  <span className=" pr-5 pl-2 text-[#acacac]  hover:text-[#ccb552]">
+                  <span className=" pr-5 pl-2 text-[#cccccc]  hover:text-[#ccb552]">
                    Privacy Policy
                   </span>
                 </NavLink>
@@ -121,7 +121,7 @@ export default function Footer() {
                   to={"/category"}
                   className="inline-block transition-transform duration-200  hover:scale-125 "
                 >
-                  <span className=" pr-5 pl-2 text-[#acacac]  hover:text-[#ccb552]">
+                  <span className=" pr-5 pl-2 text-[#cccccc]  hover:text-[#ccb552]">
                     Term of Use
                   </span>
                 </NavLink>
@@ -131,7 +131,7 @@ export default function Footer() {
                 href="https://maps.app.goo.gl/MGRATyJRd6jbWQXY9"
                   className="inline-block transition-transform duration-200  hover:scale-125 "
                 >
-                  <span className="pr-5 pl-2 text-[#acacac]  hover:text-[#ccb552]">
+                  <span className="pr-5 pl-2 text-[#cccccc]  hover:text-[#ccb552]">
                    Site Map
                   </span>
                 </a>

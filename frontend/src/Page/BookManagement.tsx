@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { Book } from "../types/book.type";
-import { fetchDeleteBook, fetchGetBooks } from "../Data/Api";
+import { fetchDeleteBook, searchBooks } from "../Data/Api";
 import { toast } from "react-toastify";
 import RowBookTable from "../Component/RowBookTable";
 import { UserContext } from "../global-states/UserContext";
@@ -15,7 +15,6 @@ export type RowBookDataType = Book & {
 export default function BookManagement() {
   const [colDef] = useState<string[]>([
     "#",
-    "ID",
     "Title",
     "Format",
     "Author",
@@ -29,7 +28,7 @@ export default function BookManagement() {
   const { accessToken } = useContext(UserContext);
 
   useEffect(() => {
-    fetchGetBooks("/book").then((d) => {
+    searchBooks("/books/search", { query: "" }).then((d) => {
       if (d !== null)
         setRowData(
           d.map((d, index) => {
@@ -78,7 +77,7 @@ export default function BookManagement() {
           ))}
         </tr>
       </thead>
-      <tbody className="[&>tr]:even:bg-gray-300 [&>tr]:odd:bg-gray-100 [&>tr>*]:p-4  [&>tr>*]:border  [&>tr>*]:border-gray-300">
+      <tbody className="[&>tr]:even:bg-gray-300 [&>tr]:odd:bg-gray-100 [&>tr>*]:p-4  [&>tr>*]:border  [&>tr>*]:border-gray-500">
         {rowData.map((item) => (
           <RowBookTable data={item} key={item.id} />
         ))}

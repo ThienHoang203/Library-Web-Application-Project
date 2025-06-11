@@ -54,7 +54,7 @@ export class BookShelfService {
         `bookShelf.${filterData.sortBy}`,
         filterData.sortOrder === 'asc' ? 'ASC' : 'DESC',
       );
-
+    query.leftJoinAndSelect('bookShelf.book', 'b');
     return await query.getMany();
   }
 

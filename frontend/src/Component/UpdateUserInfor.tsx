@@ -83,7 +83,7 @@ export default function UpdateUserInfor({ user, closeForm }: Props) {
     }, []);
 
     return (
-        <div className="fixed top-1/2 left-4/6 transform -translate-x-1/2 -translate-y-1/2  z-20 rounded-md bg-white shadow-[0px_0px_20px_rgba(0,0,0,1)]">
+        <div className="fixed top-1/2 left-3/6 transform -translate-x-1/2 -translate-y-1/2  z-20 rounded-md bg-white shadow-[0px_0px_20px_rgba(0,0,0,1)]">
             <button
                 className="text-gray-400 font-semibold cursor-pointer hover:text-red-500 hover:scale-125 transition:scale duration-300 ease-in-out ml-3 mt-2"
                 onClick={closeForm}

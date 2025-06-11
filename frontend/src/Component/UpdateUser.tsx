@@ -37,7 +37,7 @@ export default function UpdateUser({ setClose }: Props) {
     });
 
     return (
-        <div className="text-center fixed top-40 right-[30%] items-center justify-center  mx-auto my-5  w-xl border-2 bg-white border-black rounded-2xl shadow-[0px_0px_20px_rgba(0,0,0,1)]">
+        <div className="text-center fixed  items-center justify-center  mx-auto my-5  w-xl border-2 bg-white border-black rounded-2xl shadow-[0px_0px_20px_rgba(0,0,0,1)]">
             <button onClick={() => setClose()}  className="absolute right-[50px] top-[10px] text-black font-bold px-3 py-1.5 rounded-md border border-black  hover:cursor-pointer hover:text-white hover:bg-black  transform:hover  duration-300 ease">X</button>
             <h2 className="font-medium text-[25px] pt-3 pb-1">Change User Information</h2>
             <form

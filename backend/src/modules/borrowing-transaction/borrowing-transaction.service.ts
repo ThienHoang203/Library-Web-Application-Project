@@ -365,7 +365,7 @@ export class BorrowingTransactionService {
 
       // If the transaction is not in PENDING or CANCEL status, throw BadRequestException
       if (
-        transaction.status !== BorrowingTransactionStatus.PENDING &&
+        transaction.status !== BorrowingTransactionStatus.RETURNED &&
         transaction.status !== BorrowingTransactionStatus.CANCEL
       )
         throw new BadRequestException('Giao dịch không thể hủy!');

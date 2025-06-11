@@ -18,6 +18,10 @@ import { UserContext } from "./global-states/UserContext";
 import { toast } from "react-toastify";
 import { getUserProfile } from "./Data/Api";
 import { AxiosError, HttpStatusCode } from "axios";
+import UserStorage from "./Component/UserStorage";
+import CreateNewBook from "./Component/CreateNewBook";
+import UserRentedBook from "./Component/UserRentedBook";
+import BorrowManagement from "./Page/BorrowManagement";
 const router = createBrowserRouter([
     {
         path: "",
@@ -41,7 +45,22 @@ const router = createBrowserRouter([
                     },
                     {
                         path: "user",
-                        element: <User />
+                        element: <User />,
+                        children: [
+                            {
+                                index: true,
+                                element: <UserStorage />
+                            },
+                            {
+                                path: "rentedBook",
+                                element: <UserRentedBook />
+                            },
+                            {
+                                path: ":bookId",
+                                element: <Single />
+                            },
+                           
+                        ]
                     },
                     {
                         path: "search",
@@ -74,6 +93,25 @@ const router = createBrowserRouter([
                     {
                         path: "books",
                         element: <BookManagement />
+                    }
+                    ,
+                    {
+                        path: "borrow",
+                        element: <BorrowManagement />
+                    }
+                    ,
+                    {
+                        path: "addbook",
+                        element: <CreateNewBook
+                                      endPoint="books"
+                                    />
+                    }
+                    ,
+                    {
+                        path: "adduser",
+                        element: <Register
+                                      endPoint="auth/signup/admin"
+                                    />
                     }
                 ]
             }

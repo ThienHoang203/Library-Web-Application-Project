@@ -10,30 +10,42 @@ export enum BookGerne {
 }
 
 export enum BookFormat {
-    PHYS = "bản in",
-    DIG = "bản điện tử"
+    PHYSIC = "bản in",
+    DIGITAL = "bản điện tử"
 }
 
 export enum BookSortType {
-    ID = "id",
     TITLE = "title",
-    FORMAT = "format",
     AUTHOR = "author",
-    GERNE = "gerne",
-    STOCK = "stock",
-    WAITING_BORROW_COUNT = "waitingBorrowCount",
+    GENRE = "genre",
     PUBLISHED_DATE = "publishedDate",
     VERSION = "version",
     CREATED_AT = "created_at",
-    UPDATED_AT = "updated_at"
 }
 
+type User = {
+  id: number;
+  name: string;
+};
+type Rating = {
+  id: number;
+  comment: string;
+  created_at: string;
+  updated_at: string;
+  rating: number;
+  bookId: number;
+  userId: number;
+  user: User;
+};
 export type Book = {
     id: number;
     title: string;
     format: BookFormat;
+    avgRating: string;
+    ratingCount: string;
     author: string;
     coverImageFilename: string;
+    ratings: Rating[];
     contentFilename: string;
     genre: BookGerne;
     description: string;
@@ -69,5 +81,8 @@ export const BOOK_HEADERS: HeaderMap<bookHeaders> = {
     author: "Author",
     genre: "Genre",
     publishedDate: "Published Date",
-    version: "Version"
+    version: "Version",
+    avgRating: "",
+    ratingCount: "",
+    ratings: ""
 };
