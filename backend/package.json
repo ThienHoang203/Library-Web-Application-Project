@@ -21,7 +21,11 @@
     "migration:run": "typeorm-ts-node-commonjs migration:run -d ./src/config/data-source.ts",
     "migration:generate": "typeorm-ts-node-commonjs migration:generate src/migrations/$NAME -- -d src/config/data-source.ts",
     "migration:create": "typeorm-ts-node-commonjs migration:create src/migrations/$NAME",
-    "migration:revert": "typeorm-ts-node-commonjs migration:revert -- -d src/config/data-source.ts"
+    "migration:revert": "typeorm-ts-node-commonjs migration:revert -- -d src/config/data-source.ts",
+    "db:create": "ts-node ./node_modules/typeorm-extension/bin/cli.cjs db:create",
+    "db:drop": "ts-node ./node_modules/typeorm-extension/bin/cli.cjs db:drop",
+    "seed:run": "ts-node ./node_modules/typeorm-extension/bin/cli.cjs seed:run -d ./src/db/data-source.ts",
+    "seed:create": "ts-node ./node_modules/typeorm-extension/bin/cli.cjs  seed:create"
   },
   "dependencies": {
     "@nestjs-modules/mailer": "2.0.2",
@@ -45,7 +49,8 @@
     "passport-local": "1.0.0",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.1",
-    "typeorm": "0.3.22"
+    "typeorm": "0.3.22",
+    "typeorm-extension": "^3.7.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.2.0",

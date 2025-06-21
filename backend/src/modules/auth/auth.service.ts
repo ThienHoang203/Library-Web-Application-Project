@@ -11,11 +11,10 @@ import { User } from 'src/entities/user.entity';
 import { JwtService } from '@nestjs/jwt';
 import CreateUserDto from '../users/dto/create-user.dto';
 import { MailerService } from '@nestjs-modules/mailer';
-import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 import ForgotPassword from 'src/entities/forgot-password.entity';
 import { Repository } from 'typeorm';
-import { generateRandomCode } from 'src/common/utils/functions';
+import { comparePlainAndHash, generateRandomCode, hashCode } from 'src/common/utils/functions';
 import { formatVietnamDateTime } from 'src/common/utils/fotmat';
 import ResetPasswordDto from './dto/reset-password.dto';
 
@@ -32,7 +31,7 @@ export class AuthService {
   async validateUser({ password, username }: LogInDto): Promise<User> {
     const user = await this.usersService.findByUsername(username);
 
-    if (bcrypt.compareSync(password, user.password)) {
+    if (await comparePlainAndHash(password, user.password)) {
       return user;
     }
 
@@ -64,7 +63,7 @@ export class AuthService {
     const user = await this.usersService.findByEmail(email);
 
     const verificationCode = generateRandomCode(6);
-    const hashedVerifycationCode = await bcrypt.hash(verificationCode, 10);
+    const hashedVerifycationCode = await hashCode(verificationCode);
 
     const expiresIn = new Date(Date.now() + 5 * 60 * 1000); //code is going to expire after 5 minutes
 
@@ -92,7 +91,7 @@ export class AuthService {
     const forgotPassword = await this.forgotPasswordRepository.findOneBy({ email });
     if (!forgotPassword) throw new NotFoundException(`Không tìm thấy email ${email}`);
 
-    const compare = await bcrypt.compare(verifycationCode, forgotPassword.verificationCode);
+    const compare = await comparePlainAndHash(verifycationCode, forgotPassword.verificationCode);
     if (!compare) throw new BadRequestException(`Mã xác thực không đúng!`);
 
     if (forgotPassword.expiresIn.getTime() < Date.now())

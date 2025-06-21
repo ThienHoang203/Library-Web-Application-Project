@@ -11,9 +11,10 @@ import UpdateUserDto from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User, UserRole, UserStatus } from 'src/entities/user.entity';
 import { Equal, Like, Not, Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
+
 import AdminUpdateUserDto from './dto/admin-update-user.dto';
 import { FilterUserDto } from './dto/filter-user.dto';
+import { comparePlainAndHash, hashPass } from 'src/common/utils/functions';
 
 @Injectable()
 export class UsersService {
@@ -49,7 +50,7 @@ export class UsersService {
 
     //If those fields have not in any record, it will create a new user
     user = this.userRepository.create(signupData);
-    user.password = this.hashPass(signupData.password);
+    user.password = await hashPass(signupData.password);
     const result = await this.userRepository.insert(user);
 
     if (result.identifiers.length < 1)
@@ -133,10 +134,10 @@ export class UsersService {
   }
 
   async updatePassword(user: User, oldPass: string, newPass: string) {
-    if (!bcrypt.compareSync(oldPass, user.password))
+    if (!comparePlainAndHash(oldPass, user.password))
       throw new BadRequestException('Mật khẩu cũ không đúng!');
 
-    const hashedPass = this.hashPass(newPass);
+    const hashedPass = await hashPass(newPass);
     const { affected } = await this.userRepository.update(user.id, { password: hashedPass });
 
     if (affected !== 1) throw new InternalServerErrorException('Server bị lỗi, vui lòng thử lại!');
@@ -205,7 +206,7 @@ export class UsersService {
     if (user.status === UserStatus.DISABLE)
       throw new ForbiddenException(`Người dùng(email =${email}) không được phép cập nhật`);
 
-    const hashedPassword = await bcrypt.hash(newPlainPassword, 10);
+    const hashedPassword = await hashPass(newPlainPassword);
 
     this.userRepository.update({ email }, { password: hashedPassword });
 
@@ -230,9 +231,5 @@ export class UsersService {
     const result = await this.userRepository.delete({ id: id });
 
     if (result.affected !== 1) throw new InternalServerErrorException('Xóa không thành công!');
-  }
-
-  hashPass(plainPass: string): string {
-    return bcrypt.hashSync(plainPass, 10);
   }
 }

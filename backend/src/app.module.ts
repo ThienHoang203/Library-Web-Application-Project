@@ -20,6 +20,7 @@ import { UserStatusInterceptor } from './common/interceptors/user-status.interce
 import { BorrowingTransactionModule } from './modules/borrowing-transaction/borrowing-transaction.module';
 import { FinesModule } from './modules/fines/fines.module';
 import { BookShelfModule } from './modules/book-shelf/book-shelf.module';
+import { DbModule } from './db/db.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { BookShelfModule } from './modules/book-shelf/book-shelf.module';
     BorrowingTransactionModule,
     FinesModule,
     BookShelfModule,
+    DbModule,
   ],
   controllers: [AppController],
   providers: [

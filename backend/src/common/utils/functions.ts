@@ -1,6 +1,7 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import * as crypto from 'crypto';
+import * as bcrypt from 'bcrypt';
 import * as fs from 'fs';
+import crypto from 'crypto';
 import path, { join, parse } from 'path';
 import { TransactionTypeTime } from 'src/modules/borrowing-transaction/dto/admin-filter-transaction.dto';
 
@@ -94,4 +95,16 @@ export function buildDateRange(
     end = new Date(y, 12, 0, 23, 59, 59, 999);
   }
   return { start, end };
+}
+
+export async function hashCode(plainPass: string): Promise<string> {
+  return await bcrypt.hash(plainPass, 5);
+}
+
+export async function hashPass(plainPass: string): Promise<string> {
+  return await bcrypt.hash(plainPass, 10);
+}
+
+export async function comparePlainAndHash(plainPass: string, hashedPass: string): Promise<boolean> {
+  return await bcrypt.compare(plainPass, hashedPass);
 }
