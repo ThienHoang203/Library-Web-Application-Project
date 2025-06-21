@@ -14,7 +14,7 @@ export function generateRandomCode(length: number): string {
 }
 
 export function createFolderIfAbsent(folderPath: string) {
-  if (!fs.existsSync(folderPath)) fs.mkdirSync(folderPath);
+  if (!fs.existsSync(folderPath)) fs.mkdirSync(folderPath, { mode: 0o744, recursive: true });
 }
 
 export function createFilename(file: Express.Multer.File): string {

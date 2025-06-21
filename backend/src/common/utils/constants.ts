@@ -5,7 +5,10 @@ export const FILE_CONSTANTS = {
   MAX_FILE_COVER_IMAGE_SIZE: 5 * 1024 * 1024, // 5MB
   UPLOAD_DIR: './uploads',
   EBOOK_FOLDER: './uploads/ebooks',
-  COVER_IMAGES_FOLDER: 'uploads/covers',
+  PUBLIC_STATIC_DIR: './public',
+  PUBLIC_STATIC_IMAGE: './public/images',
+  COVER_IMAGES_FOLDER: 'public/images/book-covers',
+  COVER_AVATARS_FOLDER: 'public/images/avatars',
   COVER_IMAGE_MIME_TYPE: ['image/jpg', 'image/jpeg', 'image/png'],
   COVER_IMAGE_EXT_TYPE: ['.jpg', '.jpeg', '.png'],
   EBOOK_MIME_TYPE: ['application/pdf', 'application/epub+zip'],

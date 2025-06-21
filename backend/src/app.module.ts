@@ -21,6 +21,8 @@ import { BorrowingTransactionModule } from './modules/borrowing-transaction/borr
 import { FinesModule } from './modules/fines/fines.module';
 import { BookShelfModule } from './modules/book-shelf/book-shelf.module';
 import { DbModule } from './db/db.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { staticFileConfig } from './config/static-file.config';
 
 @Module({
   imports: [
@@ -28,7 +30,7 @@ import { DbModule } from './db/db.module';
       envFilePath: '.env',
       isGlobal: true,
     }),
-
+    ServeStaticModule.forRoot(staticFileConfig),
     TypeOrmModule.forRootAsync({
       useClass: TypeOrmConfigService,
     }),
