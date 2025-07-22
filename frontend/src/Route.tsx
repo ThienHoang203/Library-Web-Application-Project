@@ -13,15 +13,13 @@ import Admin from "./Page/Admin";
 import Register from "./Page/Register";
 import UserPage from "./Page/UserPage";
 import PDFViewer from "./Component/PDFViewer";
-import { useContext, useEffect } from "react";
-import { UserContext } from "./global-states/UserContext";
-import { toast } from "react-toastify";
-import { getUserProfile } from "./Data/Api";
-import { AxiosError, HttpStatusCode } from "axios";
 import UserStorage from "./Component/UserStorage";
 import CreateNewBook from "./Component/CreateNewBook";
 import UserRentedBook from "./Component/UserRentedBook";
 import BorrowManagement from "./Page/BorrowManagement";
+import { useContext, useEffect } from "react";
+import { UserContext } from "./global-states/UserContext";
+import { getUserProfile } from "./Data/Api";
 const router = createBrowserRouter([
     {
         path: "",
@@ -58,8 +56,7 @@ const router = createBrowserRouter([
                             {
                                 path: ":bookId",
                                 element: <Single />
-                            },
-                           
+                            }
                         ]
                     },
                     {
@@ -82,6 +79,7 @@ const router = createBrowserRouter([
                     }
                 ]
             },
+
             {
                 path: "/admin",
                 element: <Admin />,
@@ -93,25 +91,18 @@ const router = createBrowserRouter([
                     {
                         path: "books",
                         element: <BookManagement />
-                    }
-                    ,
+                    },
                     {
                         path: "borrow",
                         element: <BorrowManagement />
-                    }
-                    ,
+                    },
                     {
                         path: "addbook",
-                        element: <CreateNewBook
-                                      endPoint="books"
-                                    />
-                    }
-                    ,
+                        element: <CreateNewBook endPoint="books" />
+                    },
                     {
                         path: "adduser",
-                        element: <Register
-                                      endPoint="auth/signup/admin"
-                                    />
+                        element: <Register endPoint="auth/signup/admin" />
                     }
                 ]
             }
@@ -124,44 +115,20 @@ const router = createBrowserRouter([
 ]);
 
 export default function Routes() {
-    const { dispatch } = useContext(UserContext);
-
+    const { accessToken, dispatch } = useContext(UserContext);
+    const storedToken = localStorage.getItem("token");
     useEffect(() => {
-        const storedToken = localStorage.getItem("token");
+        console.log(accessToken);
+
         if (storedToken) {
-            toast.promise(
-                getUserProfile(storedToken).then((d) => {
+            getUserProfile(storedToken)
+                .then((d) => {
                     dispatch({ type: "authenticated", user: d });
                     dispatch({ type: "login", token: storedToken });
-                }),
-                {
-                    pending: "Vui lòng chờ xác thực",
-                    success: {
-                        render: "Xác thực thành công 👌",
-                        autoClose: 500
-                    },
-                    error: {
-                        render({ data }) {
-                            if (data instanceof AxiosError) {
-                                console.error({ data: data.response?.data });
-
-                                if (
-                                    data.status !== HttpStatusCode.Unauthorized &&
-                                    data.response &&
-                                    typeof data.response.data === "object" &&
-                                    data.response.data.message &&
-                                    typeof data.response.data.message === "string"
-                                )
-                                    return data.response.data.message;
-                            }
-
-                            return "Vui lòng đăng nhập lại🤯";
-                        },
-                        autoClose: 1000
-                    }
-                }
-            );
-            dispatch({ type: "login", token: storedToken });
+                })
+                .catch((e) => {
+                    console.error("Error fetching user profile:", e);
+                });
         }
     }, []);
     return <RouterProvider router={router} />;

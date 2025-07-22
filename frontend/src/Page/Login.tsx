@@ -20,9 +20,8 @@ export default function Login() {
     });
 
     async function logIn(loginData: LoginType) {
-        
         const accessToken = await LoginNormal("/auth/login", loginData);
-        
+
         if (!accessToken) {
             console.error("Đăng nhập thất bại");
             return;

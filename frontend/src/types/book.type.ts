@@ -20,22 +20,22 @@ export enum BookSortType {
     GENRE = "genre",
     PUBLISHED_DATE = "publishedDate",
     VERSION = "version",
-    CREATED_AT = "created_at",
+    CREATED_AT = "created_at"
 }
 
 type User = {
-  id: number;
-  name: string;
+    id: number;
+    name: string;
 };
 type Rating = {
-  id: number;
-  comment: string;
-  created_at: string;
-  updated_at: string;
-  rating: number;
-  bookId: number;
-  userId: number;
-  user: User;
+    id: number;
+    comment: string;
+    created_at: string;
+    updated_at: string;
+    rating: number;
+    bookId: number;
+    userId: number;
+    user: User;
 };
 export type Book = {
     id: number;
@@ -44,9 +44,9 @@ export type Book = {
     avgRating: string;
     ratingCount: string;
     author: string;
-    coverImageFilename: string;
+    coverImageFilename?: string;
     ratings: Rating[];
-    contentFilename: string;
+    ebookFilename: string;
     genre: BookGerne;
     description: string;
     stock: number;
@@ -82,6 +82,7 @@ export const BOOK_HEADERS: HeaderMap<bookHeaders> = {
     genre: "Genre",
     publishedDate: "Published Date",
     version: "Version",
+    ebookFilename: "Ebook Filename",
     avgRating: "",
     ratingCount: "",
     ratings: ""

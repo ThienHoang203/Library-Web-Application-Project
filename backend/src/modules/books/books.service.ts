@@ -1,12 +1,13 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import CreateBookDto from './dto/create-book.dto';
 import { Book, BookFormat } from 'src/entities/book.entity';
-import { In, Like, Not, Repository } from 'typeorm';
+import { In, Like, Not, Raw, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UpdateBookDto } from './dto/update-book.dto';
 import { FILE_CONSTANTS } from 'src/common/utils/constants';
@@ -14,6 +15,7 @@ import { removeFile, replaceFile, saveFile } from 'src/common/utils/functions';
 import SearchBookDto from './dto/search-book.dto';
 import { CreateReadingProgressDto } from './dto/create-reading-progress.dto';
 import { ReadingProgress } from 'src/entities/reading-progress.entity';
+import { UpdateReadingProgressDto } from './dto/update-reading-progress.dto';
 
 @Injectable()
 export class BooksService {
@@ -282,19 +284,73 @@ export class BooksService {
     userId: number,
     { bookId, lastOffset, lastPage }: CreateReadingProgressDto,
   ) {
-    const exist = await this.bookRepository.existsBy({
+    // Kiểm tra xem người dùng có tồn tại tiến độ đọc sách cho cuốn sách này không
+    let exists: boolean = await this.readingProgressRepository.existsBy({
+      bookId,
+      userId,
+    });
+    if (exists) {
+      throw new ConflictException('Tiến độ đọc sách đã tồn tại!');
+    }
+
+    // Kiểm tra xem sách có tồn tại và là sách điện tử hay không
+    exists = await this.bookRepository.existsBy({
       id: bookId,
       format: BookFormat.DIG,
-      ebookFilename: Not(In(['', ' ', null, undefined])),
+      ebookFilename: Raw((alias) => `${alias} IS NOT NULL AND TRIM(${alias}) <> ''`),
     });
-
-    if (!exist) {
+    if (!exists) {
       throw new BadRequestException(
         'Sách không tồn tại hoặc không phải sách điện tử hoặc không có file Ebook!',
       );
     }
 
-    const result = this.readingProgressRepository.insert({ bookId, userId, lastOffset, lastPage });
-    if (!result) throw new InternalServerErrorException('Tạo tiến độ đọc sách thất bại!');
+    // Tạo tiến độ đọc sách mới
+    const result = await this.readingProgressRepository.insert({
+      bookId,
+      userId,
+      lastOffset,
+      lastPage,
+    });
+    // Kiểm tra kết quả trả về
+    if (result.identifiers.length < 1)
+      throw new InternalServerErrorException('Tạo tiến độ đọc sách thất bại!');
+  }
+
+  async updateReadingProgress(
+    userId: number,
+    { bookId, lastPage, lastOffset }: UpdateReadingProgressDto,
+  ) {
+    const progress = await this.readingProgressRepository.findOne({
+      relations: ['book'],
+      where: { bookId, userId },
+    });
+
+    if (!progress) {
+      throw new BadRequestException('Tiến độ đọc sách không tồn tại');
+    }
+
+    const result = await this.readingProgressRepository.update(progress.id, {
+      lastPage,
+      lastOffset: lastOffset ?? progress.lastOffset,
+    });
+    if (!result.affected || result.affected < 1)
+      throw new InternalServerErrorException('cập nhật tiến độ đọc sách thất bại!');
+  }
+
+  async getReadingProgressByUserIdAndBookId(
+    userId: number,
+    bookId: number,
+  ): Promise<ReadingProgress> {
+    const progress = await this.readingProgressRepository.findOne({
+      where: { userId, bookId },
+      relations: ['book'],
+    });
+
+    if (!progress) {
+      throw new NotFoundException('Tiến độ đọc sách không tồn tại');
+    }
+
+    return progress;
   }
 }

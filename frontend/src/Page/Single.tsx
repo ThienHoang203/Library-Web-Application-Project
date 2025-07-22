@@ -2,17 +2,11 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { Button, Slider, TextField } from "@mui/material";
 import { Checkbox } from "@mui/material";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { AddBookToStorage, borrowBook, CreateRating, DeleteRating, fetchGetABook, viewBook } from "../Data/Api";
+import { AddBookToStorage, borrowBook, CreateRating, DeleteRating, fetchGetABook } from "../Data/Api";
 import { toast } from "react-toastify";
 import { Book } from "../types/book.type";
-import { HttpStatusCode } from "axios";
 import defaultCoverImage from "/vite.svg";
 import { UserContext } from "../global-states/UserContext";
-
-function generateImageURL(data: string): string {
-    const blob = new Blob([data], { type: "application/pdf" });
-    return URL.createObjectURL(blob);
-}
 
 export default function Single() {
     const navigate = useNavigate();
@@ -82,16 +76,6 @@ export default function Single() {
     }
 
     const [coverImageLink, setCoverImageLink] = useState("");
-    useEffect(() => {
-        if (book) {
-            viewBook(decodeURIComponent(book.coverImageFilename)).then((response) => {
-                if (response.status !== HttpStatusCode.Ok) throw new Error("Failed to fetch PDF");
-                const blob = new Blob([response.data], { type: "application/pdf" });
-                const url = URL.createObjectURL(blob);
-                setCoverImageLink(url);
-            });
-        }
-    }, []);
 
     useEffect(() => {
         const bookId = params?.bookId;
@@ -100,9 +84,12 @@ export default function Single() {
         toast.promise(
             fetchGetABook(bookId).then((d) => {
                 setReload(!reload);
-                console.log(d);
                 setBook(d);
-                setCoverImageLink(d.coverImageFilename ? generateImageURL(d.coverImageFilename) : defaultCoverImage);
+                setCoverImageLink(
+                    d.coverImageFilename
+                        ? `${import.meta.env.VITE_BOOK_COVER_IMAGE_URL}/${d.coverImageFilename}`
+                        : defaultCoverImage
+                );
             }),
             {
                 error: {
@@ -148,10 +135,10 @@ export default function Single() {
                 </div>
                 <div className="flex flex-nowrap gap-2">
                     <Link
-                        target="_blank"
-                        to={`/view/${decodeURIComponent(book.contentFilename)}`}
+                        target="_self"
+                        to={`/view/${decodeURIComponent(book.ebookFilename ?? "")}`}
                         relative="path"
-                        state={{ filename: book.contentFilename ?? "" }}
+                        state={{ filename: book.ebookFilename ?? "", bookId: book.id }}
                         className="flex flex-nowrap items-center gap-2 bg-red-700 text-white font-medium  py-1 px-2 rounded hover:bg-[black] hover:text-[#ccb552] hover:cursor-pointer"
                     >
                         <i className="fa-solid fa-book-open"></i> <p>Đọc Sách</p>

@@ -9,6 +9,8 @@ export class ParseIntPositivePipe implements PipeTransform {
     const intValue = parseInt(value, 10);
 
     if (isNaN(intValue)) {
+      console.log('Heelo');
+
       throw new BadRequestException('Tham số phải là kiểu nguyên!');
     }
 

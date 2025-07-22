@@ -6,7 +6,7 @@ import { CreateRatingType, RatingType } from "../types/rating.type";
 import { BookShelf } from "../types/book-shelf.type";
 import { Borrow, BorrowType } from "../types/borrow.type";
 
-const API_BASE_URL = "http://localhost:5050/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -19,6 +19,7 @@ export async function fetchUpdateUserInfor(
     { birthDate, email, name, phoneNumber }: UpdateUserForm,
     token: string
 ): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = {};
 
     if (email) data.email = email;
@@ -37,11 +38,28 @@ export async function fetchUpdateUserInfor(
     });
 }
 
-export async function viewBook(fileName: string) {
-    return api.get(`books/view/`, {
-        responseType: "blob",
-        params: { filename: fileName }
-    });
+export async function viewBook(fileName: string, token?: string | null): Promise<Blob> {
+    try {
+        console.log(token);
+
+        const response = await api.get<Blob>(`/books/view/`, {
+            responseType: "blob",
+            params: { filename: fileName },
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        console.log({ response });
+
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        if (axios.isAxiosError(error)) {
+            console.error("Lỗi API:", error.response?.status, error.response?.data?.message);
+            throw new Error(error.response?.data?.message || "Lỗi không xác định");
+        }
+        throw new Error("Lỗi không xác định");
+    }
 }
 
 export async function getMyBorrowBook(token: string, params: Record<string, number>): Promise<BorrowType[] | null> {
@@ -320,15 +338,21 @@ export async function fetchDeleteUser(bookId: string | number, token: string): P
 }
 
 export async function getUserProfile(token: string): Promise<User> {
-    const repsonse = await api.get("users/profile/", {
-        headers: {
-            Authorization: `Bearer ${token}`
+    try {
+        const repsonse = await api.get("users/profile/", {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        return repsonse.data.data;
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            console.error("Lỗi API:", error.response?.status, error.response?.data?.message);
+            throw new Error(error.response?.data?.message || "Lỗi không xác định");
         }
-    });
-
-    if (repsonse.status !== HttpStatusCode.Ok) throw new AxiosError("Token không hợp lệ!");
-
-    return repsonse.data.data;
+        throw new Error("Lỗi không xác định");
+    }
 }
 
 export async function fetchGetUsers(endpoint: string, token: string): Promise<User[]> {
@@ -454,3 +478,62 @@ export const getById = async (endpoint: string, id: string | number) => {
         return { statusCode: 500, status: "error", message: "Lỗi không xác định" };
     }
 };
+
+export async function getProgress(bookId: string | number, token: string): Promise<{ lastPage: number } | null> {
+    try {
+        const reponse = await api.get(`/reading-progress`, {
+            params: { bookId },
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        return reponse.data;
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            if (error.status === HttpStatusCode.NotFound) {
+                throw new Error("404: Không tìm thấy tiến độ đọc cho sách này");
+            }
+            throw new Error(error.response?.data?.message || "Lỗi không xác định");
+        }
+        throw new Error("Lỗi không xác định");
+    }
+}
+
+export async function updateProgress(bookId: string | number, page: number, token: string): Promise<any> {
+    try {
+        const result = await api.patch(
+            `/reading-progress`,
+            { bookId, lastPage: page },
+            {
+                headers: { Authorization: `Bearer ${token}` }
+            }
+        );
+
+        return result.data;
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            const errorMessage = error.response?.data?.message || "Lỗi không xác định";
+            console.error("Lỗi API:", errorMessage);
+            throw new Error(errorMessage);
+        } else {
+            throw new Error("Lỗi không xác định");
+        }
+    }
+}
+
+export async function createProgress(bookId: string | number, page: number, token: string): Promise<void> {
+    try {
+        await api.post(
+            `/reading-progress`,
+            { bookId, lastPage: page },
+            {
+                headers: { Authorization: `Bearer ${token}` }
+            }
+        );
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            console.error("Lỗi API:", error.response?.status, error.response?.data?.message);
+        } else {
+            console.error("Error creating reading progress:", error);
+        }
+    }
+}

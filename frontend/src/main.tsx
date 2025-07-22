@@ -4,7 +4,7 @@ import Route from "./Route";
 import UserProvider from "./global-states/UserProvider";
 
 createRoot(document.getElementById("root")!).render(
-  <UserProvider>
-    <Route />
-  </UserProvider>
+    <UserProvider>
+        <Route />
+    </UserProvider>
 );

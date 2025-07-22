@@ -18,5 +18,5 @@ export class CreateReadingProgressDto {
   @IsInt({ message: 'phải là số nguyên lớn hơn 0' })
   @Type(() => Number)
   @IsOptional()
-  lastOffset: number = 0;
+  lastOffset?: number = 0;
 }

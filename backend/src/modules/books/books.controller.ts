@@ -37,6 +37,7 @@ import { plainToInstance } from 'class-transformer';
 import { BookInfoDto } from './dto/book-info.dto';
 import { QueryNotNullPipe } from 'src/common/pipes/query-not-null.pipe';
 import { CreateReadingProgressDto } from './dto/create-reading-progress.dto';
+import { UpdateReadingProgressDto } from './dto/update-reading-progress.dto';
 
 @Roles(UserRole.ADMIN)
 @Controller('books')
@@ -196,7 +197,7 @@ export class BooksController {
     const filePath = join(process.cwd(), folder, filename);
 
     if (!fs.existsSync(filePath)) throw new NotFoundException(`Not found file name ${filename}`);
-
+    console.log(filePath);
     return res.sendFile(filePath);
   }
 
@@ -221,9 +222,32 @@ export class BooksController {
     return plainToInstance(BookInfoDto, this.booksService.filterBooks(query));
   }
 
+  @ResponseMessage('Tạo tiến độ đọc sách thành công.')
   @Post('reading-progress')
   @Roles()
-  createReadingProgress(@Req() req: Request, @Body() body: CreateReadingProgressDto) {
-    return this.booksService.createReadingProgress((req?.user as User).id, body);
+  async createReadingProgress(@Req() req: Request, @Body() body: CreateReadingProgressDto) {
+    return await this.booksService.createReadingProgress((req?.user as User).id, body);
+  }
+
+  @ResponseMessage('Cập nhật tiến độ đọc sách thành công.')
+  @Roles()
+  @Patch('reading-progress')
+  async updateReadingProgress(@Req() req: Request, @Body() body: UpdateReadingProgressDto) {
+    console.log('Hello');
+
+    return await this.booksService.updateReadingProgress((req?.user as User).id, body);
+  }
+
+  @ResponseMessage('Lấy tiến độ đọc sách thành công.')
+  @Roles()
+  @Get('reading-progress')
+  async getReadingProgressByUserIdAndBookId(
+    @Req() req: Request,
+    @Query('bookId', ParseIntPositivePipe) bookId: number,
+  ) {
+    return await this.booksService.getReadingProgressByUserIdAndBookId(
+      (req?.user as User).id,
+      bookId,
+    );
   }
 }
